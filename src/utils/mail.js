@@ -15,11 +15,11 @@ const sendEmail = async (options) => {
   const emailHtml = mailGenerator.generate(options.mailgenContent);
 
   const transporter = nodemailer.createTransport({
-    host: process.nextTick.MAILTRAP_SMTP_HOST,
-    port: MAILTRAP_SMTP_PORT,
+    host: process.env.MAILTRAP_SMTP_HOST,
+    port: process.env.MAILTRAP_SMTP_PORT,
     auth: {
-      user: MAILTRAP_SMTP_USER,
-      pass: MAILTRAP_SMTP_PASS,
+      user: process.env.MAILTRAP_SMTP_USER,
+      pass: process.env.MAILTRAP_SMTP_PASS,
     },
   });
 
@@ -81,4 +81,8 @@ const forgotPasswordMailgenContent = (username, passwordResetUrl) => {
   };
 };
 
-export { emailVerificationMailgenContent, forgotPasswordMailgenContent };
+export {
+  emailVerificationMailgenContent,
+  forgotPasswordMailgenContent,
+  sendEmail,
+};

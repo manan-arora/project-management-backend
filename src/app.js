@@ -20,9 +20,12 @@ app.use(
 
 //import the routes
 
-import healthCheckRouter from "./routes/healthcheck.routes.js"; //can name it anything because we exported default router 
+import healthCheckRouter from "./routes/healthcheck.routes.js"; //can name it anything because we exported default router
+
+import authRouter from "./routes/auth.routes.js";
 
 app.use("/api/v1/healthcheck", healthCheckRouter); //calls router
+app.use("/api/v1/auth", authRouter);
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
