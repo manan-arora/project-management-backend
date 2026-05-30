@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 
 const app = express();
 
@@ -7,6 +8,8 @@ const app = express();
 app.use(express.json({ limit: "16kb" })); //Parses incoming JSON data from requests.
 app.use(express.urlencoded({ extended: true, limit: "16kb" })); //Parses form data sent from HTML forms.
 app.use(express.static("public")); //Serves static files like images, CSS, and JavaScript from the public folder.
+
+app.use(cookieParser());
 
 //cors configs
 app.use(
