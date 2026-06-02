@@ -3,6 +3,7 @@ import { ApiResponse } from "../utils/api-response.js";
 import { ApiError } from "../utils/api-error.js";
 import asyncHandler from "../utils/async-handler.js";
 import { emailVerificationMailgenContent, sendEmail } from "../utils/mail.js";
+import jwt from "jsonwebtoken";
 
 // Generate JWT access & refresh tokens and store refresh token in DB
 const generateAccessAndRefreshTokens = async (userId) => {
@@ -235,10 +236,75 @@ const resendEmailVerification = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, {}, "Mail has been sent to yout email"));
+    .json(new ApiResponse(200, {}, "Mail has been sent to your email"));
+});
+
+const refreshAccessToken = asyncHandler(async (req, res) => {
+  // Get refresh token from cookie (browser) or request body (mobile/Postman)
+  const incomingRefreshToken =
+    req.cookies.refreshToken || req.body.refreshToken;
+
+  // Cannot issue new tokens without a refresh token
+  if (!incomingRefreshToken) {
+    throw new ApiError(401, "Unauthorized access");
+  }
+
+  try {
+    // Verify token signature and expiry
+    // If verified, store the payload in decodedToken
+    const decodedToken = jwt.verify(
+      incomingRefreshToken,
+      process.env.REFRESH_TOKEN_SECRET,
+    );
+
+    // Get the user associated with this refresh token
+    const user = await User.findById(decodedToken?._id);
+
+    // Reject if user no longer exists
+    if (!user) {
+      throw new ApiError(401, "Invalid refresh token");
+    }
+
+    // Accept only the latest refresh token stored in DB
+    // (prevents reuse of old/stolen refresh tokens)
+    if (incomingRefreshToken !== user?.refreshToken) {
+      throw new ApiError(401, "Refresh token is expired");
+    }
+
+    // Secure cookie settings
+    const options = {
+      httpOnly: true,
+      secure: true,
+    };
+
+    // Generate fresh access & refresh tokens
+    const { accessToken, refreshToken: newRefreshToken } =
+      await generateAccessAndRefreshTokens(user._id);
+
+    // Store newly generated refresh token in DB
+    // so older refresh tokens become invalid
+    user.refreshToken = newRefreshToken;
+    await user.save();
+
+    // Send new tokens in cookies and response body
+    return res
+      .status(200)
+      .cookie("accessToken", accessToken, options)
+      .cookie("refreshToken", newRefreshToken, options)
+      .json(
+        new ApiResponse(
+          200,
+          { accessToken, refreshToken: newRefreshToken },
+          "Access token refreshed",
+        ),
+      );
+  } catch (error) {
+    // Covers invalid, tampered, or expired refresh tokens
+    throw new ApiError(401, "Invalid refresh token");
+  }
 });
 
 // const getCurrentUser = asyncHandler(async (req, res) => {
 // })
 
-export { registerUser, login, logoutUser, getCurrentUser, verifyEmail, resendEmailVerification };
+export { registerUser, login, logoutUser, getCurrentUser, verifyEmail, resendEmailVerification, refreshAccessToken };
