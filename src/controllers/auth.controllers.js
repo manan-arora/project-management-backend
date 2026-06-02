@@ -2,8 +2,9 @@ import { User } from "../models/user.models.js";
 import { ApiResponse } from "../utils/api-response.js";
 import { ApiError } from "../utils/api-error.js";
 import asyncHandler from "../utils/async-handler.js";
-import { emailVerificationMailgenContent, sendEmail } from "../utils/mail.js";
+import { emailVerificationMailgenContent, forgotPasswordMailgenContent, sendEmail } from "../utils/mail.js";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 
 // Generate JWT access & refresh tokens and store refresh token in DB
 const generateAccessAndRefreshTokens = async (userId) => {
@@ -205,7 +206,7 @@ const verifyEmail = asyncHandler(async (req, res) => {
 });
 
 const resendEmailVerification = asyncHandler(async (req, res) => {
-  const user = User.findById(req.user?._id);
+  const user = await User.findById(req.user?._id);
 
   if (!user) {
     throw new ApiError(404, "User does not exist");
@@ -304,6 +305,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
   }
 });
 
+//Send password reset mail
 const forgotPasswordRequest = asyncHandler(async (req, res) => {
   const { email } = req.body;
 
@@ -325,7 +327,7 @@ const forgotPasswordRequest = asyncHandler(async (req, res) => {
   await sendEmail({
     email: user?.email,
     subject: "Password Reset Request",
-    mailgenContent: emailVerificationMailgenContent(
+    mailgenContent: forgotPasswordMailgenContent(
       user.username,
       `${process.env.FORGOT_PASSWORD_REDIRECT_URL}/${unHashedToken}`,
     ),
@@ -342,6 +344,7 @@ const forgotPasswordRequest = asyncHandler(async (req, res) => {
     );
 });
 
+//Verify token from URL and reset password
 const resetForgottenPassword = asyncHandler(async (req, res) => {
   const { resetToken } = req.params;
   const { newPassword } = req.body;
@@ -353,22 +356,31 @@ const resetForgottenPassword = asyncHandler(async (req, res) => {
 
   const user = await User.findOne({
     forgotPasswordToken: hashedToken,
-    forgotPasswordExpiry: { $gt: Date().now },
+    forgotPasswordExpiry: { $gt: Date.now() },
   });
 
   if (!user) {
     throw new ApiError(489, "Token is invalid or expired");
   }
 
-  forgotPasswordToken = undefined;
-  forgotPasswordExpiry = undefined;
+  user.forgotPasswordToken = undefined;
+  user.forgotPasswordExpiry = undefined;
 
   user.password = newPassword;
   await user.save({ validateBeforeSave: false }); //invokes the pre-hook that hashes the password and then saves in db
 
-  return res.status(200).json(200, {}, "Password reset successfully");
+  return res
+  .status(200)
+  .json(
+    new ApiResponse(
+      200,
+      {},
+      "Password reset successfully"
+    )
+  );
 });
 
+//Replace old password with new one (for already logged in user)
 const changeCurrentPassword = asyncHandler(async (req, res) => {
   const { oldPassword, newPassword } = req.body;
 
@@ -381,9 +393,11 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
   }
 
   user.password = newPassword;
-  user.save({ validateBeforeSave });
+  await user.save({ validateBeforeSave: false });
 
-  return res.status(200).json(200, {}, "Password changed successfully");
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Password changed successfully"));
 });
 
 export {
