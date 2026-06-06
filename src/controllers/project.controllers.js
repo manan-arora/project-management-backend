@@ -92,7 +92,7 @@ const createProject = asyncHandler(async (req, res) => {
     createdBy: new mongoose.Types.ObjectId(req.user._id),
   });
 
-  await projectMember.create({
+  await ProjectMember.create({
     user: new mongoose.Types.ObjectId(req.user._id),
     project: new mongoose.Types.ObjectId(project._id),
     role: UserRolesEnum.ADMIN,
