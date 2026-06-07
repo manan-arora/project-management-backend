@@ -1,5 +1,5 @@
 import { body } from "express-validator";
-import { AvailableUserRoles } from "../utils/constants.js";
+import { AvailableTaskStatuses, AvailableUserRoles } from "../utils/constants.js";
 
 const userRegisterValidator = () => {
   return [
@@ -72,6 +72,40 @@ const addMembertoProjectValidator = () => {
   ];
 };
 
+const createTaskValidator = () => {
+  return [
+    body("title").notEmpty().withMessage("Title is required"),
+    body("description").optional(),
+    body("assignedTo").optional(),
+    body("status").optional(),
+  ]
+}
+
+const updateTaskValidator = () => {
+  return [
+    body("title").optional(),
+    body("description").optional(),
+    body("assignedTo").optional(),
+    body("status")
+    .optional()
+    .isIn(AvailableTaskStatuses),
+  ]
+}
+
+const createSubTaskValidator = () => {
+  return [
+    body("title").notEmpty().withMessage("Title is required"),
+    body("isCompleted").optional(),
+  ]
+}
+
+const updateSubTaskValidator = () => {
+  return [
+    body("title").optional(),
+    body("isCompleted").optional(),
+  ]
+}
+
 export {
   userRegisterValidator,
   userLoginValidator,
@@ -79,5 +113,9 @@ export {
   userForgotPasswordValidator,
   userResetForgotPasswordValidator,
   createProjectValidator,
-  addMembertoProjectValidator
+  addMembertoProjectValidator,
+  createTaskValidator,
+  updateTaskValidator,
+  createSubTaskValidator,
+  updateSubTaskValidator,
 };
