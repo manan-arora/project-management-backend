@@ -18,7 +18,7 @@ const projectNoteSchema = new Schema(
     }
   },
   {
-    timestamp: true,
+    timestamps: true,
   },
 );
 

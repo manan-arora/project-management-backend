@@ -23,7 +23,7 @@ const subTaskSchema = new Schema(
     },
   },
   {
-    timestamp: true,
+    timestamps: true,
   },
 );
 

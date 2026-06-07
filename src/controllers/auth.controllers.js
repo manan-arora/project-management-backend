@@ -173,7 +173,7 @@ const verifyEmail = asyncHandler(async (req, res) => {
   }
 
   let hashedToken = crypto
-    .createHash(sha256)
+    .createHash("sha256")
     .update(verificationToken)
     .digest("hex");
 
