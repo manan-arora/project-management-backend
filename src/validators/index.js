@@ -76,7 +76,7 @@ const createTaskValidator = () => {
   return [
     body("title").notEmpty().withMessage("Title is required"),
     body("description").optional(),
-    body("assignedTo").optional(),
+    body("assignedTo").notEmpty().withMessage("Assignee is required"),
     body("status").optional(),
   ]
 }
