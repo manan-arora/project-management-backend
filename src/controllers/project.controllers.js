@@ -139,6 +139,22 @@ const deleteProject = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Project not found");
   }
 
+  // Get all task IDs belonging to this project (needed to delete their subtasks)
+  const tasks = await Task.find({ project: projectId }).select("_id");
+  const taskIds = tasks.map((task) => task._id);
+
+  // Delete all subtasks belonging to those tasks
+  await Subtask.deleteMany({ task: { $in: taskIds } });
+
+  // Delete all tasks belonging to this project
+  await Task.deleteMany({ project: projectId });
+
+  // Delete all project members
+  await ProjectMember.deleteMany({ project: projectId });
+
+  // Delete all notes
+  await Note.deleteMany({ project: projectId });
+
   return res
     .status(200)
     .json(new ApiResponse(200, deletedProject, "Project deleted successfully"));
