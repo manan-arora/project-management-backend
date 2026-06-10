@@ -3,6 +3,8 @@ import {
   createTask,
   createSubTask,
   updateTask,
+  addTaskAttachments,
+  deleteTaskAttachment,
   updateSubTask,
   deleteTask,
   deleteSubTask,
@@ -57,6 +59,26 @@ router
     ]),
     deleteTask,
   );
+
+router
+  .route("/:projectId/t/:taskId/attachments")
+  .post(
+    validateProjectPermission([
+      UserRolesEnum.ADMIN,
+      UserRolesEnum.PROJECT_ADMIN,
+    ]),
+    upload.array("attachments"),
+    addTaskAttachments,
+  );
+
+router
+  .route(
+    "/:projectId/t/:taskId/attachments/:attachmentId",
+  )
+  .delete(validateProjectPermission([
+      UserRolesEnum.ADMIN,
+      UserRolesEnum.PROJECT_ADMIN,
+    ]), deleteTaskAttachment);
 
 router
   .route("/:projectId/t/:taskId/subtasks")

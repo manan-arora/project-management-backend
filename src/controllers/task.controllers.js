@@ -161,6 +161,42 @@ const updateTask = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Project not found");
   }
 
+  const task = await Task.findOneAndUpdate(
+    {
+      _id: new mongoose.Types.ObjectId(taskId),
+      project: new mongoose.Types.ObjectId(projectId),
+    },
+    {
+      title,
+      description,
+      assignedTo: assignedTo
+        ? new mongoose.Types.ObjectId(assignedTo)
+        : undefined, //mongoose ignores undefined fields during update, so it won't overwrite with empty
+      status,
+    },
+    {
+      new: true,
+    },
+  );
+
+  if (!task) {
+    throw new ApiError(404, "Task not found");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, task, "Task updated successfully"));
+});
+
+const addTaskAttachments = asyncHandler(async (req, res) => {
+  const { taskId, projectId } = req.params;
+
+  const project = await Project.findById(projectId);
+
+  if (!project) {
+    throw new ApiError(404, "Project not found");
+  }
+
   const files = req.files || [];
 
   const attachments = files.map((file) => {
@@ -177,13 +213,11 @@ const updateTask = asyncHandler(async (req, res) => {
       project: new mongoose.Types.ObjectId(projectId),
     },
     {
-      title,
-      description,
-      assignedTo: assignedTo
-        ? new mongoose.Types.ObjectId(assignedTo)
-        : undefined, //mongoose ignores undefined fields during update, so it won't overwrite with empty
-      status,
-      attachments: attachments.length > 0 ? attachments : undefined, //mongoose ignores undefined fields during update, so it won't overwrite with empty
+      $push: {
+        attachments: {
+          $each: attachments,
+        },
+      },
     },
     {
       new: true,
@@ -196,7 +230,48 @@ const updateTask = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, task, "Task updated successfully"));
+    .json(new ApiResponse(200, task, "Attachments added successfully"));
+});
+
+const deleteTaskAttachment = asyncHandler(async (req, res) => {
+  const { taskId, projectId, attachmentId } = req.params;
+
+  const project = await Project.findById(projectId);
+
+  if (!project) {
+    throw new ApiError(404, "Project not found");
+  }
+
+  const task = await Task.findOneAndUpdate(
+    {
+      _id: new mongoose.Types.ObjectId(taskId),
+      project: new mongoose.Types.ObjectId(projectId),
+    },
+    {
+      $pull: {
+        attachments: {
+          _id: new mongoose.Types.ObjectId(attachmentId),
+        },
+      },
+    },
+    {
+      new: true,
+    },
+  );
+
+  if (!task) {
+    throw new ApiError(404, "Task not found");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        task,
+        "Attachment deleted successfully",
+      ),
+    );
 });
 
 const deleteTask = asyncHandler(async (req, res) => {
@@ -272,14 +347,11 @@ const updateSubTask = asyncHandler(async (req, res) => {
   const task = await Task.findOne({
     _id: subtask.task,
     project: projectId,
-});
+  });
 
-if (!task) {
-    throw new ApiError(
-        404,
-        "Subtask does not belong to this project"
-    );
-}
+  if (!task) {
+    throw new ApiError(404, "Subtask does not belong to this project");
+  }
 
   const updatedSubtask = await Subtask.findByIdAndUpdate(
     subTaskId,
@@ -317,14 +389,11 @@ const deleteSubTask = asyncHandler(async (req, res) => {
   const task = await Task.findOne({
     _id: subtask.task,
     project: projectId,
-});
+  });
 
-if (!task) {
-    throw new ApiError(
-        404,
-        "Subtask does not belong to this project"
-    );
-}
+  if (!task) {
+    throw new ApiError(404, "Subtask does not belong to this project");
+  }
 
   const deletedSubtask = await Subtask.findByIdAndDelete(subTaskId);
 
@@ -341,6 +410,8 @@ export {
   createTask,
   createSubTask,
   updateTask,
+  addTaskAttachments,
+  deleteTaskAttachment,
   updateSubTask,
   deleteTask,
   deleteSubTask,
