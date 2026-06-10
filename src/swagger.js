@@ -30,6 +30,10 @@ The API is hosted on Render's on-demand infrastructure.
     ],
     tags: [
       {
+        name: "Health Check",
+        description: "API health and availability",
+      },
+      {
         name: "Authentication",
         description: "User authentication and account management",
       },
