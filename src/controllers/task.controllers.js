@@ -54,7 +54,7 @@ const createTask = asyncHandler(async (req, res) => {
       ? new mongoose.Types.ObjectId(assignedTo)
       : undefined,
     assignedBy: new mongoose.Types.ObjectId(req.user._id),
-    status,
+    status: status || undefined,
     attachments,
   });
 

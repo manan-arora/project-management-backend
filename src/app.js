@@ -39,6 +39,12 @@ app.use("/api/v1/projects/", projectRouter);
 app.use("/api/v1/tasks/", taskRouter);
 app.use("/api/v1/notes/", noteRouter);
 
+//Swagger
+import swaggerUi from "swagger-ui-express";
+import { swaggerSpec } from "./swagger.js";
+
+app.use("/api/v1/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });
