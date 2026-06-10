@@ -25,7 +25,7 @@ The API is hosted on Render's on-demand infrastructure.
     },
     servers: [
       {
-        url: 'https://workstream-06tn.onrender.com/api/v1',
+        url: 'https://workstream-06tn.onrender.com/',
       },
     ],
     tags: [
