@@ -19,7 +19,7 @@ A collaborative project management backend API.
 - File Attachments
 - Project Notes
 
-🔷Cold start notice: First request after inactivity may take ~50s. 
+🔷Cold start notice: First request after inactivity may take ~10-20s. 
 The API is hosted on Render's on-demand infrastructure.
 `,
     },
